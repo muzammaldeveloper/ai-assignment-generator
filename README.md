@@ -1,34 +1,40 @@
 # AI Assignment Generator
 
-AI Assignment Generator is a full-stack platform that generates professional academic assignments using AI writing, real-time web research, citation-aware structure, and export-ready documents.
+AI Assignment Generator is a production-oriented full-stack application for creating structured academic assignments with AI-assisted writing, real-time research, and export-ready output.
 
-## Highlights
+## Executive Summary
 
-- End-to-end assignment generation pipeline
-- JWT authentication with refresh-token flow
-- Research integration through Tavily
-- AI text generation through Groq
-- Image generation through Google Gemini
-- DOCX and PDF document export
-- Celery background processing with Redis
-- Modern Next.js frontend dashboard
+- Full assignment pipeline: research, outline, writing, and document export.
+- Secure authentication with JWT access and refresh tokens.
+- Background job execution using Celery and Redis.
+- Modern web interface built with Next.js.
+- Integrated AI services for text and image generation.
 
-## System Architecture
+## Core Features
+
+- AI text generation via Groq
+- Research enrichment via Tavily
+- Contextual image generation via Google Gemini
+- DOCX and PDF export support
+- Input validation, prompt-guarding, and rate limiting
+- User dashboard for assignment lifecycle management
+
+## Architecture Overview
 
 ```text
 Frontend (Next.js)
-  |
-  v
+    |
+    v
 Backend API (Flask)
-  |
-  +--> Auth + Validation + Rate Limiting
-  +--> Assignment Pipeline (Research -> Outline -> Writing -> Export)
-  +--> Async Jobs (Celery + Redis)
-  |
-  +--> External Services
-    - Groq (text)
-    - Tavily (research)
-    - Gemini (images)
+    |
+    +--> Authentication and Authorization
+    +--> Assignment Pipeline (Research -> Outline -> Draft -> Export)
+    +--> Async Processing (Celery + Redis)
+    |
+    +--> External Integrations
+          - Groq (LLM text generation)
+          - Tavily (web research)
+          - Gemini (image generation)
 ```
 
 ## Repository Structure
@@ -56,43 +62,49 @@ ai-assignment-generator/
 │   ├── src/hooks/
 │   ├── src/lib/
 │   └── package.json
+├── img/
 └── README.md
 ```
 
-## Backend API Reference
+## API Reference
 
-Base URL: `/api/v1`
+Base path: `/api/v1`
 
-| Method | Endpoint | Auth | Description |
+| Method | Endpoint | Authentication | Description |
 | --- | --- | --- | --- |
-| GET | /health | No | Health status endpoint |
-| POST | /auth/register | No | Register a new user |
-| POST | /auth/login | No | Login and get tokens |
-| POST | /auth/refresh | Refresh Token | Issue a new access token |
-| POST | /assignments/generate | Access Token | Start assignment generation |
-| GET | /assignments | Access Token | Get user assignments list |
-| GET | /assignments/{id} | Access Token | Get assignment details |
-| GET | /assignments/{id}/download | Access Token | Download generated file |
+| GET | /health | Not required | Service health check |
+| POST | /auth/register | Not required | Register a new account |
+| POST | /auth/login | Not required | Authenticate and issue tokens |
+| POST | /auth/refresh | Refresh token | Renew access token |
+| POST | /assignments/generate | Access token | Start assignment generation |
+| GET | /assignments | Access token | List assignments for current user |
+| GET | /assignments/{id} | Access token | Retrieve assignment details |
+| GET | /assignments/{id}/download | Access token | Download generated output |
 
 ## Frontend Screenshots
 
-### Home, Auth, and Generation Flow
+### Landing, Authentication, and Generation
 
-| Screen 1 | Screen 2 |
+| Screen | Preview |
 | --- | --- |
-| ![Frontend Screenshot 1](img/1.png) | ![Frontend Screenshot 2](img/2.png) |
-| ![Frontend Screenshot 3](img/3.png) | ![Frontend Screenshot 4](img/4.png) |
-| ![Frontend Screenshot 5](img/5.png) | ![Frontend Screenshot 6](img/6.png) |
+| Screen 1 | ![Frontend Screenshot 1](img/1.png) |
+| Screen 2 | ![Frontend Screenshot 2](img/2.png) |
+| Screen 3 | ![Frontend Screenshot 3](img/3.png) |
+| Screen 4 | ![Frontend Screenshot 4](img/4.png) |
+| Screen 5 | ![Frontend Screenshot 5](img/5.png) |
+| Screen 6 | ![Frontend Screenshot 6](img/6.png) |
 
 ### Dashboard and Assignment Views
 
-| Screen 7 | Screen 8 |
+| Screen | Preview |
 | --- | --- |
-| ![Frontend Screenshot 7](img/7.png) | ![Frontend Screenshot 8](img/8.png) |
-| ![Frontend Screenshot 9](img/9.png) | ![Frontend Screenshot 10](img/10.png) |
-| ![Frontend Screenshot 11](img/11.png) | |
+| Screen 7 | ![Frontend Screenshot 7](img/7.png) |
+| Screen 8 | ![Frontend Screenshot 8](img/8.png) |
+| Screen 9 | ![Frontend Screenshot 9](img/9.png) |
+| Screen 10 | ![Frontend Screenshot 10](img/10.png) |
+| Screen 11 | ![Frontend Screenshot 11](img/11.png) |
 
-## Quick Start
+## Local Setup
 
 ### Backend
 
@@ -113,7 +125,7 @@ Windows PowerShell:
 .\.venv\Scripts\Activate.ps1
 ```
 
-Install and run:
+Install dependencies and start API:
 
 ```bash
 pip install -r requirements.txt
@@ -121,7 +133,7 @@ cp .env.example .env
 flask run --host=0.0.0.0 --port=5000 --reload
 ```
 
-Optional worker:
+Start Celery worker (optional):
 
 ```bash
 celery -A app.tasks.assignment_tasks.celery worker --loglevel=info --concurrency=4
@@ -135,7 +147,7 @@ npm install
 npm run dev
 ```
 
-Local URLs:
+Default local endpoints:
 
 - Frontend: http://localhost:3000
 - Backend: http://localhost:5000
@@ -150,14 +162,14 @@ docker-compose down -v
 
 ## Quality Checks
 
-Backend tests:
+Backend:
 
 ```bash
 cd Backend
 pytest tests/ -v --cov=app --cov-report=html --cov-report=term-missing
 ```
 
-Frontend lint:
+Frontend:
 
 ```bash
 cd Frontend
