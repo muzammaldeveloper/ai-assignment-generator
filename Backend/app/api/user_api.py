@@ -13,7 +13,6 @@ from flask_jwt_extended import (
     jwt_required,
     get_jwt_identity,
 )
-from marshmallow import ValidationError
 
 from app.extensions import db, limiter
 from app.models.user import User
@@ -31,7 +30,7 @@ _user_response_schema = UserResponseSchema()
 
 
 @auth_bp.route("/register", methods=["POST"])
-@limiter.limit("5/minute")
+@limiter.limit("10/minute")
 def register():
     """
     Register a new user.
@@ -80,3 +79,83 @@ def register():
             "refresh_token": refresh_token,
         },
     }), 201
+
+
+@auth_bp.route("/login", methods=["POST"])
+@limiter.limit("15/minute")
+def login():
+    """
+    Authenticate a user and return JWT tokens.
+
+    Request Body:
+        - email (str): Registered email address.
+        - password (str): Account password.
+
+    Returns:
+        200: Authenticated with access and refresh tokens.
+        401: Invalid credentials or account not found.
+        403: Account deactivated.
+    """
+    data = _login_schema.load(request.get_json())
+    user = User.query.filter_by(email=data["email"]).first()
+
+    if not user or not user.check_password(data["password"]):
+        return jsonify({
+            "success": False,
+            "error": "Unauthorized",
+            "message": "Invalid email or password.",
+        }), 401
+
+    if not user.is_active:
+        return jsonify({
+            "success": False,
+            "error": "Forbidden",
+            "message": "Account deactivated.",
+        }), 403
+
+    access_token = create_access_token(identity=user.id)
+    refresh_token = create_refresh_token(identity=user.id)
+
+    logger.info("User logged in | email=%s", user.email)
+
+    return jsonify({
+        "success": True,
+        "message": "Login successful.",
+        "data": {
+            "user": _user_response_schema.dump(user),
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+        },
+    }), 200
+
+
+@auth_bp.route("/refresh", methods=["POST"])
+@jwt_required(refresh=True)
+def refresh():
+    """
+    Issue a new access token using a valid refresh token.
+
+    Returns:
+        200: New access token issued.
+        401: Missing or invalid refresh token.
+    """
+    user_id = get_jwt_identity()
+    new_token = create_access_token(identity=user_id)
+    return jsonify({"success": True, "data": {"access_token": new_token}}), 200
+
+
+@auth_bp.route("/me", methods=["GET"])
+@jwt_required()
+def get_me():
+    """
+    Return the profile of the currently authenticated user.
+
+    Returns:
+        200: User profile data.
+        401: Missing or invalid access token.
+        404: User no longer exists.
+    """
+    user = db.session.get(User, get_jwt_identity())
+    if not user:
+        return jsonify({"success": False, "message": "User not found."}), 404
+    return jsonify({"success": True, "data": _user_response_schema.dump(user)}), 200
