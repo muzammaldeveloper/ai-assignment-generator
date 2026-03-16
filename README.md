@@ -1,49 +1,100 @@
 # AI Assignment Generator
 
-AI Assignment Generator is a full-stack application that helps users generate structured academic assignments using AI text generation, web research, and document export features.
+AI Assignment Generator is a full-stack platform that generates professional academic assignments using AI writing, real-time web research, citation-aware structure, and export-ready documents.
 
-It includes:
+## Highlights
 
-- A Flask backend API with authentication, assignment pipeline, and document generation.
-- A Next.js frontend for user authentication, assignment creation, and dashboard access.
+- End-to-end assignment generation pipeline
+- JWT authentication with refresh-token flow
+- Research integration through Tavily
+- AI text generation through Groq
+- Image generation through Google Gemini
+- DOCX and PDF document export
+- Celery background processing with Redis
+- Modern Next.js frontend dashboard
+
+## System Architecture
+
+```text
+Frontend (Next.js)
+  |
+  v
+Backend API (Flask)
+  |
+  +--> Auth + Validation + Rate Limiting
+  +--> Assignment Pipeline (Research -> Outline -> Writing -> Export)
+  +--> Async Jobs (Celery + Redis)
+  |
+  +--> External Services
+    - Groq (text)
+    - Tavily (research)
+    - Gemini (images)
+```
 
 ## Repository Structure
 
 ```text
 ai-assignment-generator/
-  Backend/    # Flask API, Celery worker, models, tests
-  Frontend/   # Next.js app (App Router)
+├── Backend/
+│   ├── app/
+│   │   ├── api/
+│   │   ├── models/
+│   │   ├── schemas/
+│   │   ├── services/
+│   │   ├── tasks/
+│   │   ├── templates/
+│   │   └── utils/
+│   ├── config/
+│   ├── migrations/
+│   ├── scripts/
+│   ├── tests/
+│   ├── docker-compose.yml
+│   └── requirements.txt
+├── Frontend/
+│   ├── src/app/
+│   ├── src/components/
+│   ├── src/hooks/
+│   ├── src/lib/
+│   └── package.json
+└── README.md
 ```
 
-## Key Features
+## Backend API Reference
 
-- JWT-based authentication (access + refresh flow)
-- AI writing pipeline for academic assignment generation
-- Research enrichment using Tavily
-- Image generation integration via Gemini
-- DOCX/PDF document support
-- Async background processing with Celery + Redis
-- Responsive frontend built with Next.js and Tailwind CSS
+Base URL: `/api/v1`
 
-## Tech Stack
+| Method | Endpoint | Auth | Description |
+| --- | --- | --- | --- |
+| GET | /health | No | Health status endpoint |
+| POST | /auth/register | No | Register a new user |
+| POST | /auth/login | No | Login and get tokens |
+| POST | /auth/refresh | Refresh Token | Issue a new access token |
+| POST | /assignments/generate | Access Token | Start assignment generation |
+| GET | /assignments | Access Token | Get user assignments list |
+| GET | /assignments/{id} | Access Token | Get assignment details |
+| GET | /assignments/{id}/download | Access Token | Download generated file |
 
-Backend:
+## Frontend Screenshots
 
-- Python 3.11+
-- Flask, SQLAlchemy, Marshmallow
-- Celery + Redis
-- SQLite (local default) or PostgreSQL
+### Home, Auth, and Generation Flow
 
-Frontend:
+| Screen 1 | Screen 2 |
+| --- | --- |
+| ![Frontend Screenshot 1](img/1.png) | ![Frontend Screenshot 2](img/2.png) |
+| ![Frontend Screenshot 3](img/3.png) | ![Frontend Screenshot 4](img/4.png) |
+| ![Frontend Screenshot 5](img/5.png) | ![Frontend Screenshot 6](img/6.png) |
 
-- Next.js 15
-- React 19
-- Tailwind CSS
-- Axios
+### Dashboard and Assignment Views
 
-## Quick Start (Local)
+| Screen 7 | Screen 8 |
+| --- | --- |
+| ![Frontend Screenshot 7](img/7.png) | ![Frontend Screenshot 8](img/8.png) |
+| ![Frontend Screenshot 9](img/9.png) | ![Frontend Screenshot 10](img/10.png) |
+| ![Frontend Screenshot 11](img/11.png) | |
 
-### 1. Backend setup
+## Quick Start
+
+### Backend
 
 ```bash
 cd Backend
@@ -62,31 +113,21 @@ Windows PowerShell:
 .\.venv\Scripts\Activate.ps1
 ```
 
-Install dependencies:
+Install and run:
 
 ```bash
 pip install -r requirements.txt
-```
-
-Create environment file:
-
-```bash
 cp .env.example .env
-```
-
-Run backend API:
-
-```bash
 flask run --host=0.0.0.0 --port=5000 --reload
 ```
 
-Optional: run worker in a new terminal:
+Optional worker:
 
 ```bash
 celery -A app.tasks.assignment_tasks.celery worker --loglevel=info --concurrency=4
 ```
 
-### 2. Frontend setup
+### Frontend
 
 ```bash
 cd Frontend
@@ -94,39 +135,20 @@ npm install
 npm run dev
 ```
 
-Frontend default URL: http://localhost:3000
+Local URLs:
 
-Backend default URL: http://localhost:5000
+- Frontend: http://localhost:3000
+- Backend: http://localhost:5000
 
 ## Docker (Backend)
 
-From Backend folder:
-
 ```bash
+cd Backend
 docker-compose up --build -d
-```
-
-Stop services:
-
-```bash
 docker-compose down -v
 ```
 
-## API Base Path
-
-All backend endpoints are served under:
-
-```text
-/api/v1
-```
-
-Main endpoint groups:
-
-- `/health`
-- `/auth/*`
-- `/assignments/*`
-
-## Testing
+## Quality Checks
 
 Backend tests:
 
@@ -141,14 +163,6 @@ Frontend lint:
 cd Frontend
 npm run lint
 ```
-
-## GitHub Push Checklist
-
-- Ensure `.env` files are not committed.
-- Ensure virtual environments and build artifacts are ignored.
-- Run backend tests successfully.
-- Run frontend lint and production build.
-- Confirm README and project structure are up to date.
 
 ## License
 
