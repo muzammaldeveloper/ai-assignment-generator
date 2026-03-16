@@ -1,0 +1,82 @@
+version: "3.9"
+
+services:
+  # ── Flask API Server ──
+  web:
+    build: .
+    container_name: ai_assignment_web
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./storage:/app/storage
+    command: >
+      gunicorn "app.factory:create_app()"
+      --config gunicorn.conf.py
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── Celery Worker ──
+  worker:
+    build: .
+    container_name: ai_assignment_worker
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./storage:/app/storage
+    command: >
+      celery -A app.tasks.assignment_tasks.celery worker
+      --loglevel=info
+      --concurrency=4
+      --max-tasks-per-child=100
+    restart: unless-stopped
+
+  # ── PostgreSQL Database ──
+  db:
+    image: postgres:16-alpine
+    container_name: ai_assignment_db
+    environment:
+      POSTGRES_DB: ai_assignment_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis (Celery Broker + Rate Limiter Backend) ──
+  redis:
+    image: redis:7-alpine
+    container_name: ai_assignment_redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

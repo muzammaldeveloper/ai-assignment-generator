@@ -1,0 +1,44 @@
+# ── Web Framework ──
+Flask==3.1.0
+flask-cors==5.0.1
+flask-sqlalchemy==3.1.1
+flask-migrate==4.1.0
+flask-jwt-extended==4.7.1
+flask-limiter==3.8.0
+
+# ── Validation ──
+marshmallow==3.23.2
+flask-marshmallow==1.2.1
+
+# ── Database (SQLite for local — no PostgreSQL needed!) ──
+SQLAlchemy==2.0.36
+
+# ── Task Queue (optional for local — we'll run sync too) ──
+celery[redis]==5.4.0
+redis==5.2.1
+
+# ── AI Services ──
+groq==0.13.1
+google-generativeai==0.8.4
+tavily-python==0.5.0
+
+# ── Document Generation ──
+python-docx==1.1.2
+reportlab==4.2.5
+Pillow==11.1.0
+
+# ── HTTP & Retry ──
+requests==2.32.3
+tenacity==9.0.0
+
+# ── Security ──
+python-dotenv==1.0.1
+bleach==6.2.0
+bcrypt==4.2.1
+
+# ── Configuration ──
+pydantic==2.10.4
+pydantic-settings==2.7.1
+
+# ── Testing ──
+pytest==8.3.4

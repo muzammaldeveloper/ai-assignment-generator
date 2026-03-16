@@ -1,0 +1,62 @@
+# -----------------------------
+# Global
+# -----------------------------
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
+
+# -----------------------------
+# Secrets / Environment
+# -----------------------------
+**/.env
+**/.env.*
+!**/.env.example
+
+# -----------------------------
+# Python
+# -----------------------------
+**/__pycache__/
+**/*.py[cod]
+**/*.pyo
+**/*.egg-info/
+**/.pytest_cache/
+**/.coverage
+**/htmlcov/
+**/.ruff_cache/
+**/venv/
+**/.venv/
+**/env/
+
+# SQLite / local db
+**/*.db
+**/*.sqlite3
+
+# Celery runtime
+**/celerybeat-schedule
+**/celerybeat.pid
+
+# Backend generated storage artifacts
+Backend/storage/images/*
+Backend/storage/documents/*
+!Backend/storage/images/.gitkeep
+!Backend/storage/documents/.gitkeep
+
+# -----------------------------
+# Node / Next.js
+# -----------------------------
+Frontend/node_modules/
+Frontend/.next/
+Frontend/out/
+Frontend/.turbo/
+Frontend/.npm/
+Frontend/npm-debug.log*
+Frontend/yarn-debug.log*
+Frontend/yarn-error.log*
+Frontend/pnpm-debug.log*
+
+# Optional package manager locks (uncomment per team preference)
+# Frontend/package-lock.json
+# Frontend/yarn.lock
+# Frontend/pnpm-lock.yaml
