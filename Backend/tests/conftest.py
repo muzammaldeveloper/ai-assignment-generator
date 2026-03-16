@@ -27,11 +27,12 @@ def app():
             "postgresql://postgres:password@localhost:5432/ai_assignment_test",
         ),
         redis_url="redis://localhost:6379/1",
-        openai_api_key="test-openai-key",
+        groq_api_key="test-groq-key",
         gemini_api_key="test-gemini-key",
         tavily_api_key="test-tavily-key",
+        cors_allowed_origins="http://localhost:3000",
         flask_env="testing",
-        debug=True,
+        debug=False,
     )
 
     app = create_app(settings=test_settings)

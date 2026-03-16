@@ -17,6 +17,4 @@ jwt = JWTManager()
 cors = CORS()
 limiter = Limiter(
     key_func=get_remote_address,
-    default_limits=["200/hour"],
-    storage_uri="memory://",  # In-memory for local (no Redis needed)
 )

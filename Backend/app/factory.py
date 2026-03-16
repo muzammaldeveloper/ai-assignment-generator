@@ -1,9 +1,4 @@
-"""
-Flask Application Factory — Local Dev Friendly.
-
-No Docker, no PostgreSQL, no Redis required.
-Uses SQLite + in-memory rate limiter.
-"""
+"""Flask application factory."""
 
 from __future__ import annotations
 
@@ -21,6 +16,7 @@ def create_app(settings: Optional[Settings] = None) -> Flask:
     app = Flask(__name__)
 
     settings = settings or get_settings()
+    settings.validate_for_runtime()
     _configure_app(app, settings)
     _register_extensions(app, settings)
     _register_blueprints(app)
@@ -29,14 +25,15 @@ def create_app(settings: Optional[Settings] = None) -> Flask:
     _register_jwt_callbacks(app)
     _setup_logging(app, settings)
 
-    # Auto-create database tables (for SQLite — no migration needed)
-    with app.app_context():
-        from app.extensions import db
-        from app.models import User, Assignment, Section, Image, Reference  # noqa: F401
-        db.create_all()
+    # For local SQLite development, auto-create tables to simplify setup.
+    if settings.is_development and "sqlite" in settings.database_url:
+        with app.app_context():
+            from app.extensions import db
+            from app.models import User, Assignment, Section, Image, Reference  # noqa: F401
+            db.create_all()
 
     app.logger.info(
-        "���� AI Assignment Generator started | env=%s | db=%s",
+        "AI Assignment Generator started | env=%s | db=%s",
         settings.flask_env.value,
         "SQLite" if "sqlite" in settings.database_url else "PostgreSQL",
     )
@@ -46,9 +43,13 @@ def create_app(settings: Optional[Settings] = None) -> Flask:
 
 def _configure_app(app: Flask, settings: Settings) -> None:
     app.config["SECRET_KEY"] = settings.secret_key
-    app.config["DEBUG"] = settings.debug
+    app.config["DEBUG"] = settings.debug and settings.is_development
     app.config["SQLALCHEMY_DATABASE_URI"] = settings.sqlalchemy_database_uri
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["MAX_CONTENT_LENGTH"] = settings.max_content_length_mb * 1024 * 1024
+    app.config["SESSION_COOKIE_SECURE"] = settings.is_production
+    app.config["SESSION_COOKIE_HTTPONLY"] = True
+    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
     # SQLite doesn't need pool settings
     if "sqlite" not in settings.database_url:
@@ -68,6 +69,9 @@ def _configure_app(app: Flask, settings: Settings) -> None:
     app.config["JWT_TOKEN_LOCATION"] = ["headers"]
     app.config["JWT_HEADER_NAME"] = "Authorization"
     app.config["JWT_HEADER_TYPE"] = "Bearer"
+    app.config["RATELIMIT_STORAGE_URI"] = settings.rate_limit_storage_uri
+    app.config["RATELIMIT_DEFAULT"] = settings.rate_limit_default
+    app.config["RATELIMIT_HEADERS_ENABLED"] = True
     app.config["SETTINGS"] = settings
 
 
@@ -78,7 +82,11 @@ def _register_extensions(app: Flask, settings: Settings) -> None:
     migrate.init_app(app, db)
     ma.init_app(app)
     jwt.init_app(app)
-    cors.init_app(app, resources={r"/api/*": {"origins": "*"}})
+    cors.init_app(
+        app,
+        resources={r"/api/*": {"origins": settings.cors_origins}},
+        supports_credentials=True,
+    )
     limiter.init_app(app)
 
 

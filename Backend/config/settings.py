@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     flask_app: str = "app.factory:create_app"
     flask_env: EnvironmentType = EnvironmentType.DEVELOPMENT
     secret_key: str = Field(default="dev-secret-key-change-in-production")
-    debug: bool = True
+    debug: bool = False
 
     # ── JWT ──
     jwt_secret_key: str = Field(default="dev-jwt-secret-change-in-production")
@@ -75,6 +75,13 @@ class Settings(BaseSettings):
     # ── Rate Limiting ──
     rate_limit_default: str = "200/hour"
     rate_limit_generation: str = "20/hour"
+    rate_limit_storage_uri: str = "memory://"
+
+    # ── CORS ──
+    cors_allowed_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
+
+    # ── Request Limits ──
+    max_content_length_mb: int = 10
 
     # ── Application ──
     max_concurrent_jobs: int = 10
@@ -93,6 +100,39 @@ class Settings(BaseSettings):
     @property
     def sqlalchemy_database_uri(self) -> str:
         return self.database_url
+
+    @property
+    def cors_origins(self) -> list[str]:
+        return [o.strip() for o in self.cors_allowed_origins.split(",") if o.strip()]
+
+    @field_validator("max_content_length_mb")
+    @classmethod
+    def validate_max_content_length(cls, value: int) -> int:
+        if value < 1:
+            raise ValueError("max_content_length_mb must be >= 1")
+        return value
+
+    def validate_for_runtime(self) -> None:
+        if not self.is_production:
+            return
+
+        if self.debug:
+            raise ValueError("DEBUG must be false in production")
+
+        if self.secret_key == "dev-secret-key-change-in-production":
+            raise ValueError("SECRET_KEY must be changed in production")
+
+        if self.jwt_secret_key == "dev-jwt-secret-change-in-production":
+            raise ValueError("JWT_SECRET_KEY must be changed in production")
+
+        if not self.cors_origins:
+            raise ValueError("At least one CORS origin must be configured in production")
+
+        if "*" in self.cors_origins:
+            raise ValueError("Wildcard CORS is not allowed in production")
+
+        if self.rate_limit_storage_uri == "memory://":
+            raise ValueError("Use Redis-backed rate limiting in production")
 
 
 @lru_cache(maxsize=1)
